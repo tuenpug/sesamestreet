@@ -1,16 +1,42 @@
 import React, { useState } from 'react';
 import { CHARACTERS, OFFICIAL_IMAGES } from '../constants';
-import { Printer, Scissors } from 'lucide-react';
+import { Printer, Scissors, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const ACTIONS = [
+  { id: "idle", label: "Standing Still", animate: {} },
+  { id: "jumping", label: "Jumping Happily", animate: { y: [0, -40, 0], transition: { repeat: Infinity, duration: 0.8, ease: "backOut" } } },
+  { id: "dancing", label: "Dancing Playfully", animate: { rotate: [-10, 10, -10], transition: { repeat: Infinity, duration: 1.2, ease: "easeInOut" } } },
+  { id: "floating", label: "Floating in Air", animate: { y: [0, -15, 0], transition: { repeat: Infinity, duration: 3, ease: "easeInOut" } } },
+  { id: "zooming", label: "Zooming In & Out", animate: { scale: [1, 1.1, 1], transition: { repeat: Infinity, duration: 2, ease: "easeInOut" } } }
+];
+
+const SETTINGS = [
+  { id: "street", label: "On Sesame Street" },
+  { id: "park", label: "In a Colorful Park" },
+  { id: "pixel", label: "Pixel Art World" },
+  { id: "classroom", label: "Vibrant Classroom" },
+  { id: "space", label: "Outer Space" }
+];
 
 export default function PuzzleMaker() {
   const [character, setCharacter] = useState(CHARACTERS[0]);
+  const [action, setAction] = useState(ACTIONS[0].id);
+  const [setting, setSetting] = useState(SETTINGS[0].id);
   const [pieces, setPieces] = useState<8 | 12>(8);
+  const [seed, setSeed] = useState(1);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const imageUrl = OFFICIAL_IMAGES[character];
+  const activeAction = ACTIONS.find(a => a.id === action);
+  const settingLabel = SETTINGS.find(s => s.id === setting)?.label;
+  
+  // Generating ONLY the background to prevent AI from inventing incorrect character appearances
+  const bgPrompt = `Empty scenery of ${settingLabel}, completely empty background, absolutely no characters or people, highly detailed illustration, vibrant colors.`;
+  const bgImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(bgPrompt)}?width=800&height=${pieces === 8 ? 400 : 600}&nologo=true&seed=${seed}`;
+  const charImageUrl = OFFICIAL_IMAGES[character];
 
   return (
     <div className="space-y-8 pb-12 flex flex-col items-center">
@@ -21,48 +47,85 @@ export default function PuzzleMaker() {
           </h1>
         </div>
         <p className="text-xl text-gray-900 font-bold bg-white px-4 py-1 brutal-border inline-block rounded-full transform -rotate-1 mb-8 shadow-sm">
-          Pick a friend, print and cut!
+          Design your custom puzzle!
         </p>
 
-        <div className="bg-white p-6 brutal-border shadow-retro flex flex-col md:flex-row gap-6 justify-center items-end max-w-3xl mx-auto w-full">
-          <div className="flex-1 w-full text-left">
-            <label className="block text-sm font-black uppercase mb-2">Select Character</label>
-            <select
-              value={character}
-              onChange={(e) => setCharacter(e.target.value)}
-              className="w-full text-lg p-3 brutal-border focus:ring-4 focus:ring-blue-300 transition outline-none cursor-pointer"
-            >
-              {CHARACTERS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex-1 w-full text-left">
-            <label className="block text-sm font-black uppercase mb-2">Pieces</label>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setPieces(8)}
-                className={`flex-1 py-3 px-4 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 8 ? 'bg-blue-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
+        <div className="bg-white p-6 brutal-border shadow-retro flex flex-col gap-6 justify-center max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="w-full text-left">
+              <label className="block text-sm font-black uppercase mb-2 text-blue-700">Friend</label>
+              <select
+                value={character}
+                onChange={(e) => setCharacter(e.target.value)}
+                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-blue-300 transition outline-none cursor-pointer"
               >
-                8
-              </button>
-              <button
-                onClick={() => setPieces(12)}
-                className={`flex-1 py-3 px-4 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 12 ? 'bg-blue-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
+                {CHARACTERS.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="w-full text-left">
+              <label className="block text-sm font-black uppercase mb-2 text-red-600">Action</label>
+              <select
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-red-300 transition outline-none cursor-pointer"
               >
-                12
-              </button>
+                {ACTIONS.map((a) => (
+                  <option key={a.id} value={a.id}>{a.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="w-full text-left">
+              <label className="block text-sm font-black uppercase mb-2 text-green-700">Background</label>
+              <select
+                value={setting}
+                onChange={(e) => setSetting(e.target.value)}
+                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-green-300 transition outline-none cursor-pointer"
+              >
+                {SETTINGS.map((s) => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="w-full text-left">
+              <label className="block text-sm font-black uppercase mb-2 text-purple-700">Pieces</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPieces(8)}
+                  className={`flex-1 py-3 px-2 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 8 ? 'bg-purple-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
+                >
+                  8
+                </button>
+                <button
+                  onClick={() => setPieces(12)}
+                  className={`flex-1 py-3 px-2 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 12 ? 'bg-purple-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
+                >
+                  12
+                </button>
+              </div>
             </div>
           </div>
 
-          <button
-            onClick={handlePrint}
-            className="w-full md:w-auto bg-green-500 hover:bg-green-400 text-white font-black py-4 px-8 brutal-border shadow-retro transition flex items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Printer size={20} />
-            PRINT & PLAY
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 mt-2 border-t-4 border-black pt-6">
+            <button
+              onClick={() => setSeed(s => s + 1)}
+              className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black font-black py-4 px-6 brutal-border shadow-retro transition flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <RefreshCw size={20} />
+              RE-ROLL ARTWORK
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex-1 bg-green-500 hover:bg-green-400 text-white font-black py-4 px-6 brutal-border shadow-retro transition flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <Printer size={20} />
+              PRINT & PLAY
+            </button>
+          </div>
         </div>
       </div>
 
@@ -75,13 +138,25 @@ export default function PuzzleMaker() {
         </div>
 
         {/* Puzzle Container */}
-        <div className="relative brutal-border shadow-retro-static print:shadow-none bg-white mx-auto print:!w-[800px] print:!h-auto print:!border-4 print:!border-black" 
+        <div className="relative brutal-border shadow-retro-static print:shadow-none bg-blue-100 polka-bg mx-auto print:!w-[800px] print:!h-auto print:!border-4 print:!border-black overflow-hidden" 
              style={{ width: '100%', maxWidth: '800px', aspectRatio: pieces === 8 ? '2/1' : '4/3' }}>
           
-          <img src={imageUrl} alt={character} className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
+          {/* Layer 1: Background Scene */}
+          <img key={`${bgImageUrl}`} src={bgImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
           
-          {/* Overlay jigsaw puzzle lines */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* Layer 2: Official Character Graphic (Composite) */}
+          <div className="absolute inset-x-0 bottom-0 top-[5%] flex items-end justify-center pointer-events-none z-10 overflow-hidden pb-4">
+             <motion.img 
+                animate={activeAction?.animate || {}}
+                src={charImageUrl} 
+                alt={character} 
+                className="max-w-[70%] max-h-[90%] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.5)]" 
+                referrerPolicy="no-referrer" 
+             />
+          </div>
+
+          {/* Layer 3: Overlay jigsaw puzzle lines */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none z-20">
              <svg width="100%" height="100%" viewBox={pieces === 8 ? "0 0 400 200" : "0 0 400 300"} preserveAspectRatio="none">
                {/* Base Grid Inner Outlines */}
                <path 

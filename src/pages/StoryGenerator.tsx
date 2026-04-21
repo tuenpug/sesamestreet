@@ -30,15 +30,17 @@ export default function StoryGenerator() {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const prompt = `You are a creative children's book author. The user wants a Sesame Street story about: "${topic}".
       Requirements:
-      - Create an educational and fun story starring Sesame Street characters (like Elmo, Big Bird, Cookie Monster, etc.).
+      - Create an educational and fun story starring MULTIPLE Sesame Street characters interacting (e.g. Elmo and Cookie Monster together, showing emotions like laughing or surprised).
       - The story MUST be exactly 4 to 5 pages long.
       - Keep text brief: 1 to 2 very simple sentences per page (perfect for preschoolers).
-      - Include a highly descriptive 'imagePrompt' per page to generate an illustration. Describe the specific Sesame Street character, their action, the setting, and specify 'cute 3d cartoon style, vibrant colors'.
+      - Provide a comprehensive 'imagePrompt' for an image generator. The image prompt MUST describe the characters interacting in the scene. 
+      - CRITICAL for imagePrompt: To avoid the AI inventing new appearances, you MUST explicitly describe their canonical features (e.g., "Authentic Elmo, a furry red monster with a round orange nose", "Authentic Big Bird, a giant 8-foot tall yellow bird", "Authentic Cookie Monster, a furry blue monster with googly eyes"). 
+      - Specify 'cute 3d cartoon style, vibrant colors, official Sesame Street photography, highly detailed' in the imagePrompt.
       
-      Respond strictly with a JSON object in this format:
+      Respond strictly with a raw JSON object in this format (NO markdown blocks, just the JSON):
       {
         "pages": [
-          { "text": "page text here", "imagePrompt": "detailed image generation prompt here" }
+          { "text": "page text here", "imagePrompt": "Full scene description including canonical character details, actions, expressions, and setting" }
         ]
       }`;
 
@@ -51,9 +53,10 @@ export default function StoryGenerator() {
         }
       });
 
-      const text = response.text;
+      let text = response.text;
       if (!text) throw new Error("No response from AI");
       
+      text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(text);
       if (parsed.pages && Array.isArray(parsed.pages)) {
         setPages(parsed.pages);
@@ -120,52 +123,66 @@ export default function StoryGenerator() {
             WRITE ANOTHER STORY
           </button>
           
-          <div className="bg-white brutal-border shadow-retro-static max-w-4xl mx-auto min-h-[500px] flex flex-col md:flex-row card-pattern relative overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-                className="flex-1 flex flex-col md:flex-row w-full h-full"
-              >
-                <div className="h-64 md:h-auto md:w-1/2 bg-yellow-300 brutal-border border-l-0 border-t-0 md:border-b-0 border-r-4 p-4 md:p-8 flex items-center justify-center relative">
-                  <img
-                    src={`https://image.pollinations.ai/prompt/${encodeURIComponent(pages[currentPage].imagePrompt)}?width=600&height=600&nologo=true`}
-                    alt="Story illustration"
-                    className="w-full h-full object-cover brutal-border shadow-retro-static bg-white"
-                    crossOrigin="anonymous"
-                  />
-                  <div className="absolute top-2 right-2 bg-white brutal-border font-black px-3 py-1 text-red-600 transform rotate-3">
-                    # {currentPage + 1}
-                  </div>
-                </div>
+          <div className="w-full max-w-[800px] mx-auto relative cursor-default mt-8 px-6 md:px-12">
+            {/* Wooden/Cardboard Book Cover */}
+            <div className="brutal-border shadow-retro bg-[#E3A018] p-2 md:p-4 rounded-sm relative">
+              {/* Paper Inside (Single Page) */}
+              <div className="bg-[#fdfbf7] border-4 border-black w-full aspect-[4/5] md:aspect-square relative overflow-hidden flex shadow-[inset_0_0_15px_rgba(0,0,0,0.3)]">
                 
-                <div className="p-8 md:p-12 flex-1 flex items-center justify-center bg-white/90">
-                  <p className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-relaxed text-left font-sans italic selection:bg-yellow-300">
-                    "{pages[currentPage].text}"
-                  </p>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentPage}
+                    initial={{ opacity: 0, filter: 'blur(5px)', scale: 0.98 }}
+                    animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+                    exit={{ opacity: 0, filter: 'blur(5px)', scale: 1.02 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    {/* Full Scene generated directly by AI */}
+                    <img
+                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent(pages[currentPage].imagePrompt + ', accurate canonical sesame street character design, strictly no added or generic monsters')}?width=800&height=800&nologo=true&seed=${topic.length + currentPage}`}
+                      alt="Story illustration"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    
+                    {/* Shadow Gradient for Text Readability */}
+                    <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-20"></div>
 
-            {/* Navigation buttons */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4">
-              <button 
-                onClick={prevPage} 
-                disabled={currentPage === 0}
-                className="bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 p-4 brutal-border shadow-retro transition-transform active:scale-95"
-              >
-                <ChevronLeft size={32} />
-              </button>
-              <button 
-                onClick={nextPage} 
-                disabled={currentPage === pages.length - 1}
-                 className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 p-4 brutal-border shadow-retro transition-transform active:scale-95"
-              >
-                <ChevronRight size={32} />
-              </button>
+                    {/* Integrated Text */}
+                    <div className="absolute inset-x-0 bottom-6 md:bottom-10 px-6 md:px-16 z-30 flex flex-col items-center justify-end text-center pointer-events-none">
+                      <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-[0_4px_6px_rgba(0,0,0,1)] tracking-wide">
+                        {pages[currentPage].text}
+                      </p>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Single Page Number */}
+                <div className="absolute bottom-2 md:bottom-4 right-4 md:right-6 z-50 text-white font-black text-sm md:text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,1)] opacity-80">
+                   {currentPage + 1}
+                </div>
+              </div>
+
+              {/* Navigation Controls over the book cover */}
+              <div className="absolute top-1/2 -translate-y-1/2 -left-6 md:-left-8 z-50">
+                <button 
+                  onClick={prevPage} 
+                  disabled={currentPage === 0}
+                  className="bg-blue-500 text-white hover:bg-blue-400 disabled:opacity-0 disabled:pointer-events-none p-3 md:p-5 rounded-full brutal-border shadow-retro transition-all active:scale-90"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+              </div>
+              <div className="absolute top-1/2 -translate-y-1/2 -right-6 md:-right-8 z-50">
+                <button 
+                  onClick={nextPage} 
+                  disabled={currentPage === pages.length - 1}
+                  className="bg-green-500 text-white hover:bg-green-400 disabled:opacity-0 disabled:pointer-events-none p-3 md:p-5 rounded-full brutal-border shadow-retro transition-all active:scale-90"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
