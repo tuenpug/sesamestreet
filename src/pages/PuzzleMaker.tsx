@@ -2,41 +2,67 @@ import React, { useState } from 'react';
 import { CHARACTERS, OFFICIAL_IMAGES } from '../constants';
 import { Printer, Scissors, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const ACTIONS = [
-  { id: "idle", label: "Standing Still", animate: {} },
-  { id: "jumping", label: "Jumping Happily", animate: { y: [0, -40, 0], transition: { repeat: Infinity, duration: 0.8, ease: "backOut" } } },
-  { id: "dancing", label: "Dancing Playfully", animate: { rotate: [-10, 10, -10], transition: { repeat: Infinity, duration: 1.2, ease: "easeInOut" } } },
-  { id: "floating", label: "Floating in Air", animate: { y: [0, -15, 0], transition: { repeat: Infinity, duration: 3, ease: "easeInOut" } } },
-  { id: "zooming", label: "Zooming In & Out", animate: { scale: [1, 1.1, 1], transition: { repeat: Infinity, duration: 2, ease: "easeInOut" } } }
-];
+import TransparentCharacter from '../components/TransparentCharacter';
 
 const SETTINGS = [
   { id: "street", label: "On Sesame Street" },
   { id: "park", label: "In a Colorful Park" },
   { id: "pixel", label: "Pixel Art World" },
   { id: "classroom", label: "Vibrant Classroom" },
-  { id: "space", label: "Outer Space" }
+  { id: "space", label: "Outer Space" },
+  { id: "ocean", label: "Under the Ocean" },
+  { id: "forest", label: "Magical Fairy Forest" },
+  { id: "beach", label: "Sunny Beach" },
+  { id: "snow", label: "Snowy Wonderland" },
+  { id: "city", label: "Big City Skyline" }
 ];
 
+const generatePuzzlePath = (cols: number, rows: number) => {
+  let path = "";
+  for (let r = 1; r < rows; r++) {
+    path += `M 0 ${r * 100} `;
+    for (let c = 0; c < cols; c++) {
+      const flip = (r + c) % 2 === 0 ? 1 : 0;
+      path += `h 35 a 15 15 0 1 ${flip} 30 0 h 35 `;
+    }
+  }
+  for (let c = 1; c < cols; c++) {
+    path += `M ${c * 100} 0 `;
+    for (let r = 0; r < rows; r++) {
+      const flip = (r + c) % 2 === 0 ? 1 : 0;
+      path += `v 35 a 15 15 0 1 ${flip} 0 30 v 35 `;
+    }
+  }
+  return path.trim();
+};
+
 export default function PuzzleMaker() {
-  const [character, setCharacter] = useState(CHARACTERS[0]);
-  const [action, setAction] = useState(ACTIONS[0].id);
+  const [character1, setCharacter1] = useState(CHARACTERS[0]);
+  const [character2, setCharacter2] = useState("None");
+  const [character3, setCharacter3] = useState("None");
+  
   const [setting, setSetting] = useState(SETTINGS[0].id);
-  const [pieces, setPieces] = useState<8 | 12>(8);
+  const [pieces, setPieces] = useState<12 | 20>(12);
   const [seed, setSeed] = useState(1);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const activeAction = ACTIONS.find(a => a.id === action);
   const settingLabel = SETTINGS.find(s => s.id === setting)?.label;
+  const activeCharacters = [character1, character2, character3].filter(c => c !== "None");
   
+  const bgWidth = pieces === 12 ? 800 : 1000;
+  const bgHeight = pieces === 12 ? 600 : 800;
   // Generating ONLY the background to prevent AI from inventing incorrect character appearances
   const bgPrompt = `Empty scenery of ${settingLabel}, completely empty background, absolutely no characters or people, highly detailed illustration, vibrant colors.`;
-  const bgImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(bgPrompt)}?width=800&height=${pieces === 8 ? 400 : 600}&nologo=true&seed=${seed}`;
-  const charImageUrl = OFFICIAL_IMAGES[character];
+  const bgImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(bgPrompt)}?width=${bgWidth}&height=${bgHeight}&nologo=true&seed=${seed}`;
+
+  const cols = pieces === 12 ? 4 : 5;
+  const rows = pieces === 12 ? 3 : 4;
+  const puzzleWidth = cols * 100;
+  const puzzleHeight = rows * 100;
+  const puzzlePathStr = generatePuzzlePath(cols, rows);
 
   return (
     <div className="space-y-8 pb-12 flex flex-col items-center">
@@ -51,12 +77,12 @@ export default function PuzzleMaker() {
         </p>
 
         <div className="bg-white p-6 brutal-border shadow-retro flex flex-col gap-6 justify-center max-w-5xl mx-auto w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-2">
             <div className="w-full text-left">
-              <label className="block text-sm font-black uppercase mb-2 text-blue-700">Friend</label>
+              <label className="block text-sm font-black uppercase mb-2 text-blue-700">Friend 1</label>
               <select
-                value={character}
-                onChange={(e) => setCharacter(e.target.value)}
+                value={character1}
+                onChange={(e) => setCharacter1(e.target.value)}
                 className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-blue-300 transition outline-none cursor-pointer"
               >
                 {CHARACTERS.map((c) => (
@@ -64,20 +90,37 @@ export default function PuzzleMaker() {
                 ))}
               </select>
             </div>
-            
+
             <div className="w-full text-left">
-              <label className="block text-sm font-black uppercase mb-2 text-red-600">Action</label>
+              <label className="block text-sm font-black uppercase mb-2 text-blue-500">Friend 2</label>
               <select
-                value={action}
-                onChange={(e) => setAction(e.target.value)}
-                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-red-300 transition outline-none cursor-pointer"
+                value={character2}
+                onChange={(e) => setCharacter2(e.target.value)}
+                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-blue-200 transition outline-none cursor-pointer"
               >
-                {ACTIONS.map((a) => (
-                  <option key={a.id} value={a.id}>{a.label}</option>
+                <option value="None">None</option>
+                {CHARACTERS.map((c) => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
 
+            <div className="w-full text-left">
+              <label className="block text-sm font-black uppercase mb-2 text-blue-400">Friend 3</label>
+              <select
+                value={character3}
+                onChange={(e) => setCharacter3(e.target.value)}
+                className="w-full text-base p-3 brutal-border focus:ring-4 focus:ring-blue-100 transition outline-none cursor-pointer"
+              >
+                <option value="None">None</option>
+                {CHARACTERS.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="w-full text-left">
               <label className="block text-sm font-black uppercase mb-2 text-green-700">Background</label>
               <select
@@ -95,16 +138,16 @@ export default function PuzzleMaker() {
               <label className="block text-sm font-black uppercase mb-2 text-purple-700">Pieces</label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPieces(8)}
-                  className={`flex-1 py-3 px-2 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 8 ? 'bg-purple-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
-                >
-                  8
-                </button>
-                <button
                   onClick={() => setPieces(12)}
                   className={`flex-1 py-3 px-2 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 12 ? 'bg-purple-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
                 >
-                  12
+                  12 Pieces (Easy)
+                </button>
+                <button
+                  onClick={() => setPieces(20)}
+                  className={`flex-1 py-3 px-2 font-black brutal-border shadow-retro-static active:translate-y-1 active:shadow-none transition ${pieces === 20 ? 'bg-purple-300 transform translate-y-1 !shadow-none' : 'bg-white hover:bg-gray-50'}`}
+                >
+                  20 Pieces (Hard)
                 </button>
               </div>
             </div>
@@ -139,31 +182,51 @@ export default function PuzzleMaker() {
 
         {/* Puzzle Container */}
         <div className="relative brutal-border shadow-retro-static print:shadow-none bg-blue-100 polka-bg mx-auto print:!w-[800px] print:!h-auto print:!border-4 print:!border-black overflow-hidden" 
-             style={{ width: '100%', maxWidth: '800px', aspectRatio: pieces === 8 ? '2/1' : '4/3' }}>
+             style={{ width: '100%', maxWidth: '800px', aspectRatio: `${cols}/${rows}` }}>
           
           {/* Layer 1: Background Scene */}
           <img key={`${bgImageUrl}`} src={bgImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
           
           {/* Layer 2: Official Character Graphic (Composite) */}
-          <div className="absolute inset-x-0 bottom-0 top-[5%] flex items-end justify-center pointer-events-none z-10 overflow-hidden pb-4">
-             <motion.img 
-                animate={activeAction?.animate || {}}
-                src={charImageUrl} 
-                alt={character} 
-                className="max-w-[70%] max-h-[90%] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.5)]" 
-                referrerPolicy="no-referrer" 
-             />
+          <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+             {activeCharacters.map((char, idx) => {
+               const total = activeCharacters.length;
+               let style: React.CSSProperties = {
+                 position: 'absolute',
+                 transform: 'translateX(-50%)',
+                 width: '100%',
+                 height: '100%',
+               };
+               
+               if (total === 1) {
+                 style = { ...style, left: '50%', bottom: '-2%', maxHeight: '95%', maxWidth: '90%', zIndex: 10 };
+               } else if (total === 2) {
+                 if (idx === 0) style = { ...style, left: '32%', bottom: '-2%', maxHeight: '90%', maxWidth: '65%', zIndex: 12 };
+                 if (idx === 1) style = { ...style, left: '72%', bottom: '8%', maxHeight: '80%', maxWidth: '55%', zIndex: 11 };
+               } else {
+                 if (idx === 0) style = { ...style, left: '22%', bottom: '-2%', maxHeight: '85%', maxWidth: '50%', zIndex: 13 };
+                 if (idx === 1) style = { ...style, left: '50%', bottom: '15%', maxHeight: '72%', maxWidth: '45%', zIndex: 11 };
+                 if (idx === 2) style = { ...style, left: '78%', bottom: '5%', maxHeight: '80%', maxWidth: '45%', zIndex: 12 };
+               }
+
+               return (
+                 <div key={`${char}-${idx}`} style={style} className="origin-bottom drop-shadow-[0px_10px_15px_rgba(0,0,0,0.5)]">
+                   <TransparentCharacter 
+                      src={OFFICIAL_IMAGES[char]} 
+                      alt={char} 
+                      className="w-full h-full object-contain relative z-10"
+                   />
+                 </div>
+               );
+             })}
           </div>
 
           {/* Layer 3: Overlay jigsaw puzzle lines */}
           <div className="absolute inset-0 w-full h-full pointer-events-none z-20">
-             <svg width="100%" height="100%" viewBox={pieces === 8 ? "0 0 400 200" : "0 0 400 300"} preserveAspectRatio="none">
+             <svg width="100%" height="100%" viewBox={`0 0 ${puzzleWidth} ${puzzleHeight}`} preserveAspectRatio="none">
                {/* Base Grid Inner Outlines */}
                <path 
-                  d={pieces === 8 
-                    ? "M 0 100 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 M 100 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 M 200 0 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 M 300 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35"
-                    : "M 0 100 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 M 0 200 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 M 100 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 M 200 0 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 M 300 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35"
-                  } 
+                  d={puzzlePathStr} 
                   fill="none" 
                   stroke="black" 
                   strokeWidth="3" 
@@ -171,10 +234,7 @@ export default function PuzzleMaker() {
                   className="print:stroke-black"
                />
                <path 
-                  d={pieces === 8 
-                    ? "M 0 100 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 M 100 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 M 200 0 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 M 300 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35"
-                    : "M 0 100 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 M 0 200 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 h 35 a 15 15 0 1 0 30 0 h 35 h 35 a 15 15 0 1 1 30 0 h 35 M 100 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 M 200 0 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 M 300 0 v 35 a 15 15 0 1 1 0 30 v 35 v 35 a 15 15 0 1 0 0 30 v 35 v 35 a 15 15 0 1 1 0 30 v 35"
-                  } 
+                  d={puzzlePathStr} 
                   fill="none" 
                   stroke="white" 
                   strokeWidth="1.5" 
@@ -184,15 +244,15 @@ export default function PuzzleMaker() {
                
                {/* Numbers for puzzle pieces */}
                {Array.from({ length: pieces }).map((_, i) => {
-                 const col = i % 4;
-                 const row = Math.floor(i / 4);
+                 const col = i % cols;
+                 const row = Math.floor(i / cols);
                  // Center coordinates of each 100x100 piece
-                 const cx = col * 100 + 15;
+                 const cx = col * 100 + 18;
                  const cy = row * 100 + 20;
                  return (
                    <g key={i}>
-                     <circle cx={cx} cy={cy} r="12" fill="#FFD200" stroke="#000" strokeWidth="2" className="print:fill-white" />
-                     <text x={cx} y={cy + 4} fontFamily="Fredoka One, cursive" fontSize="14" fontWeight="bold" fill="#000" textAnchor="middle">
+                     <circle cx={cx} cy={cy} r="14" fill="#FFD200" stroke="#000" strokeWidth="2" className="print:fill-white" />
+                     <text x={cx} y={cy + 5} fontFamily="Fredoka One, cursive" fontSize="16" fontWeight="bold" fill="#000" textAnchor="middle">
                        {i + 1}
                      </text>
                    </g>
