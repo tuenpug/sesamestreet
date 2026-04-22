@@ -251,10 +251,7 @@ export default function PuzzleMaker() {
                  const cy = row * 100 + 20;
                  return (
                    <g key={i}>
-                     <circle cx={cx} cy={cy} r="14" fill="#FFD200" stroke="#000" strokeWidth="2" className="print:fill-white" />
-                     <text x={cx} y={cy + 5} fontFamily="Fredoka One, cursive" fontSize="16" fontWeight="bold" fill="#000" textAnchor="middle">
-                       {i + 1}
-                     </text>
+                     {/* The hint numbers were removed per user request for visual clarity */}
                    </g>
                  )
                })}

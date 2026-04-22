@@ -9,19 +9,7 @@ interface Page {
   text: string;
   sceneryPrompt: string;
   actors: string[];
-  animation: string;
 }
-
-const getAnimation = (type: string, index: number) => {
-  const delay = index * 0.15;
-  switch (type) {
-    case 'bouncing': return { y: [0, -20, 0], transition: { repeat: Infinity, duration: 0.8, delay, ease: "backOut" } };
-    case 'wobbling': return { rotate: [-6, 6, -6], transition: { repeat: Infinity, duration: 1.2, delay, ease: "easeInOut" } };
-    case 'nodding': return { scaleY: [1, 0.9, 1], transition: { repeat: Infinity, duration: 1.5, delay } };
-    case 'sliding': return { x: index === 0 ? [-10, 5, -10] : [10, -5, 10], transition: { repeat: Infinity, duration: 3, delay, ease: "easeInOut" } };
-    default: return { y: [0, -8, 0], transition: { repeat: Infinity, duration: 2, delay, ease: "easeInOut" } };
-  }
-};
 
 export default function StoryGenerator() {
   const [topic, setTopic] = useState('');
@@ -48,13 +36,12 @@ export default function StoryGenerator() {
       - The story MUST be exactly 4 pages long.
       - Keep text brief: 1 to 2 very simple sentences per page.
       - For each page, pick 1 to 2 'actors' from exactly this list who are interacting in this scene: [${CHARACTERS.map(c => `"${c}"`).join(', ')}].
-      - Provide a 'sceneryPrompt' describing ONLY the background environment. Describe an empty scene (NO people, NO characters). Specify 'bright daytime soft lighting, extremely light pastel background, empty scenery, children book watercolor'.
-      - Pick an 'animation' matching what the actors do: "bouncing" (happy/jumping), "wobbling" (dancing/silly), "nodding" (talking/listening), "sliding" (walking).
+      - Provide a 'sceneryPrompt' describing a rich, vibrant, detailed engaging background scene matching the story text and objects (NO people, NO characters). Specify 'highly detailed children book illustration, rich vibrant colors, NO people, empty scenery'.
 
       Respond strictly with a raw JSON object in this format (NO markdown blocks, just the JSON):
       {
         "pages": [
-          { "text": "page text here", "sceneryPrompt": "light bright empty scenery description here", "actors": ["Elmo", "Cookie Monster"], "animation": "bouncing" }
+          { "text": "page text here", "sceneryPrompt": "rich vibrant engaging scenery description here", "actors": ["Elmo", "Cookie Monster"] }
         ]
       }`;
 
@@ -154,9 +141,9 @@ export default function StoryGenerator() {
                   >
                     {/* Background Scenery without characters */}
                     <img
-                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent((pages[currentPage].sceneryPrompt || 'empty room') + ', bright light pastel empty background without characters')}?width=800&height=800&nologo=true&seed=${topic.length + currentPage}`}
+                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent((pages[currentPage].sceneryPrompt || 'beautiful scene') + ', highly detailed children book illustration, rich vibrant colors, no people')}?width=800&height=800&nologo=true&seed=${topic.length + currentPage}`}
                       alt="Story background"
-                      className="absolute inset-0 w-full h-full object-cover opacity-80"
+                      className="absolute inset-0 w-full h-full object-cover opacity-90"
                       referrerPolicy="no-referrer"
                     />
 
@@ -166,7 +153,6 @@ export default function StoryGenerator() {
                         <div key={idx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_5px_15px_rgba(0,0,0,0.5)]">
                           {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (
                             <TransparentCharacter 
-                              animate={getAnimation(pages[currentPage].animation || '', idx)}
                               src={OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES]} 
                               alt={actor} 
                               className="relative z-10 max-h-full max-w-[150%] object-contain origin-bottom" 
