@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Sparkles, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Sparkles, Loader2, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI } from '@google/genai';
 import { CHARACTERS, OFFICIAL_IMAGES } from '../constants';
@@ -66,7 +66,12 @@ export default function StoryGenerator() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to generate story. Please try again.");
+      const errorMsg = err.message || "";
+      if (errorMsg.includes("API key not valid") || errorMsg.includes("API_KEY_INVALID")) {
+        setError("Your Gemini API Key is invalid. If you added a custom GEMINI_API_KEY in the Settings > Secrets menu, please remove it or ensure it's correct. The system will provide a free key automatically if you leave it empty.");
+      } else {
+        setError(errorMsg || "Failed to generate story. Please try again.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -119,12 +124,18 @@ export default function StoryGenerator() {
         </div>
       ) : (
         <div className="space-y-6">
-          <button onClick={() => setPages(null)} className="bg-red-500 text-white font-bold brutal-border shadow-retro px-4 py-2 flex items-center justify-center gap-2 mx-auto">
-            <BookOpen size={20} />
-            WRITE ANOTHER STORY
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mx-auto print:hidden">
+            <button onClick={() => setPages(null)} className="bg-red-500 text-white font-bold brutal-border shadow-retro px-4 py-3 flex items-center justify-center gap-2">
+              <BookOpen size={20} />
+              WRITE ANOTHER STORY
+            </button>
+            <button onClick={() => window.print()} className="bg-blue-500 text-white font-bold brutal-border shadow-retro px-4 py-3 flex items-center justify-center gap-2">
+              <Printer size={20} />
+              EXPORT TO PDF / PRINT
+            </button>
+          </div>
           
-          <div className="w-full max-w-[800px] mx-auto relative cursor-default mt-8 px-6 md:px-12">
+          <div className="w-full max-w-[800px] mx-auto relative cursor-default mt-8 px-6 md:px-12 print:hidden">
             {/* Wooden/Cardboard Book Cover */}
             <div className="brutal-border shadow-retro bg-[#E3A018] p-2 md:p-4 rounded-sm relative">
               {/* Paper Inside (Single Page) */}
@@ -199,6 +210,54 @@ export default function StoryGenerator() {
                   <ChevronRight size={32} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* PRINT-ONLY LAYOUT (4-Panel Comic Strip) */}
+          <div className="hidden print:flex fixed inset-0 z-[99999] bg-white flex-col w-full h-full pb-4">
+            <div className="text-center py-4 border-b-4 border-black mb-4">
+              <h1 className="sesame-title text-3xl text-black">
+                {topic.toUpperCase()}
+              </h1>
+            </div>
+            
+            <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-4 px-4 w-full h-full max-h-[190mm]">
+              {pages.map((p, idx) => (
+                <div key={idx} className="relative border-4 border-black bg-white overflow-hidden flex flex-col justify-end">
+                  {/* Immutable static background */}
+                  <img
+                    src={`https://image.pollinations.ai/prompt/${encodeURIComponent((p.sceneryPrompt || 'beautiful scene') + ', highly detailed children book illustration, rich vibrant colors, no people')}?width=800&height=800&nologo=true&seed=${topic.length + idx}`}
+                    alt="Story background panel"
+                    className="absolute inset-0 w-full h-full object-cover opacity-90"
+                    referrerPolicy="no-referrer"
+                  />
+                  
+                  {/* Actors (Static layout) */}
+                  <div className="absolute inset-x-0 bottom-[22%] top-[5%] flex items-end justify-center gap-2 px-2 z-10 pointer-events-none">
+                    {(p.actors || []).slice(0, 2).map((actor, actIdx) => (
+                      <div key={actIdx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_3px_8px_rgba(0,0,0,0.5)]">
+                        {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (
+                          <img 
+                            src={OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES]} 
+                            alt={actor} 
+                            className="relative z-10 max-h-full max-w-[130%] object-contain origin-bottom" 
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Text Panel */}
+                  <div className="relative z-20 bg-white border-t-4 border-black p-4 mt-auto">
+                    <p className="text-black font-black text-sm md:text-md leading-tight text-center font-sans tracking-wide">
+                      {p.text}
+                    </p>
+                    <div className="absolute -top-4 -left-4 bg-yellow-400 border-4 border-black rounded-full w-10 h-10 flex items-center justify-center font-black text-xl z-30 font-display">
+                      {idx + 1}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

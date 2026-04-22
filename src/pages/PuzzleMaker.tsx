@@ -231,7 +231,7 @@ export default function PuzzleMaker() {
                   stroke="black" 
                   strokeWidth="3" 
                   strokeDasharray="6,4"
-                  className="print:stroke-black"
+                  className="print:hidden opacity-50"
                />
                <path 
                   d={puzzlePathStr} 
@@ -239,7 +239,7 @@ export default function PuzzleMaker() {
                   stroke="white" 
                   strokeWidth="1.5" 
                   strokeDasharray="6,4"
-                  className="print:hidden relative shadow-sm"
+                  className="opacity-90 drop-shadow-sm"
                />
                
                {/* Numbers for puzzle pieces */}
