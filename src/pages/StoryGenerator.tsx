@@ -223,7 +223,7 @@ export default function StoryGenerator() {
             
             <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-4 px-4 w-full h-full max-h-[190mm]">
               {pages.map((p, idx) => (
-                <div key={idx} className="relative border-4 border-black bg-white overflow-hidden flex flex-col justify-end">
+                <div key={idx} className="relative border-4 border-black bg-[#fdfbf7] overflow-hidden flex flex-col shadow-[inset_0_0_15px_rgba(0,0,0,0.3)]">
                   {/* Immutable static background */}
                   <img
                     src={`https://image.pollinations.ai/prompt/${encodeURIComponent((p.sceneryPrompt || 'beautiful scene') + ', highly detailed children book illustration, rich vibrant colors, no people')}?width=800&height=800&nologo=true&seed=${topic.length + idx}`}
@@ -232,27 +232,30 @@ export default function StoryGenerator() {
                     referrerPolicy="no-referrer"
                   />
                   
-                  {/* Actors (Static layout) */}
-                  <div className="absolute inset-x-0 bottom-[22%] top-[5%] flex items-end justify-center gap-2 px-2 z-10 pointer-events-none">
+                  {/* Magic Pop-Up Puppet Theater Overlay */}
+                  <div className="absolute inset-x-0 bottom-[18%] top-[8%] flex items-end justify-center gap-2 sm:gap-6 pointer-events-none z-10 px-4">
                     {(p.actors || []).slice(0, 2).map((actor, actIdx) => (
-                      <div key={actIdx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_3px_8px_rgba(0,0,0,0.5)]">
+                      <div key={actIdx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_5px_15px_rgba(0,0,0,0.5)]">
                         {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (
-                          <img 
+                          <TransparentCharacter 
                             src={OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES]} 
                             alt={actor} 
-                            className="relative z-10 max-h-full max-w-[130%] object-contain origin-bottom" 
+                            className="relative z-10 max-h-full max-w-[150%] object-contain origin-bottom" 
                           />
                         )}
                       </div>
                     ))}
                   </div>
 
+                  {/* Darker Vignette Shadow for Text Readability at Bottom - Force print background */}
+                  <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-20"></div>
+
                   {/* Text Panel */}
-                  <div className="relative z-20 bg-white border-t-4 border-black p-4 mt-auto">
-                    <p className="text-black font-black text-sm md:text-md leading-tight text-center font-sans tracking-wide">
+                  <div className="absolute inset-x-0 bottom-4 px-4 z-30 flex flex-col items-center justify-end text-center pointer-events-none">
+                    <p className="text-[#fdfbf7] font-black text-sm md:text-lg leading-tight text-center font-sans tracking-wide" style={{ textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
                       {p.text}
                     </p>
-                    <div className="absolute -top-4 -left-4 bg-yellow-400 border-4 border-black rounded-full w-10 h-10 flex items-center justify-center font-black text-xl z-30 font-display">
+                    <div className="absolute -top-[160px] left-2 bg-yellow-400 border-4 border-black rounded-full w-10 h-10 flex items-center justify-center font-black text-xl z-50 font-display text-black">
                       {idx + 1}
                     </div>
                   </div>
