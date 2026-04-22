@@ -22,8 +22,8 @@ export const OFFICIAL_IMAGES: Record<string, string> = {
   "Telly": "https://sesameworkshop.org/wp-content/uploads/2023/02/presskit_ss_bio_telly-750x416.png",
   "Mr. Snuffleupagus": "https://sesameworkshop.org/wp-content/uploads/2023/03/Snuffy_bio-copy-667x500.jpg",
   "Squeaky the Duck": "https://sesameworkshop.org/wp-content/uploads/2023/03/presskit_ss_bio_ernie-750x416.png",
-  "Two-Headed Monster": "https://image.pollinations.ai/prompt/sesame%20street%20two-headed%20monster%20fuzzy%20purple%20character%20clean%20white%20background?width=400&height=400&nologo=true",
-  "Roxie Marie": "https://image.pollinations.ai/prompt/sesame%20street%20roxie%20marie%20muppet%20female%20character%20clean%20white%20background?width=400&height=400&nologo=true"
+  "Two-Headed Monster": "https://image.pollinations.ai/prompt/sesame%20street%20two-headed%20monster%20fuzzy%20purple%20character%20clean%20white%20background?width=400&height=400&nologo=true&model=turbo",
+  "Roxie Marie": "https://image.pollinations.ai/prompt/sesame%20street%20roxie%20marie%20muppet%20female%20character%20clean%20white%20background?width=400&height=400&nologo=true&model=turbo"
 };
 
 export const CHARACTERS = Object.keys(OFFICIAL_IMAGES);

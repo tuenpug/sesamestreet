@@ -23,7 +23,7 @@ export default function TransparentCharacter({ src, alt, className, style, anima
       if (!isMounted) return;
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      if (!ctx) {
+      if (!ctx || img.width <= 10 || img.height <= 10) {
         setProcessedSrc(src);
         return;
       }
@@ -87,8 +87,12 @@ export default function TransparentCharacter({ src, alt, className, style, anima
       if (isMounted) setProcessedSrc(src);
     };
 
-    const cleanUrl = src.replace(/^https?:\/\//, '');
-    img.src = `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&output=png`;
+    if (src.includes('pollinations.ai')) {
+      img.src = src;
+    } else {
+      const cleanUrl = src.replace(/^https?:\/\//, '');
+      img.src = `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&output=png`;
+    }
 
     return () => { isMounted = false; };
   }, [src]);

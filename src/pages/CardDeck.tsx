@@ -113,9 +113,21 @@ export default function CardDeck() {
                  {/* Generated Food Image */}
                  <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-sm overflow-hidden border border-gray-300 shadow-[inset_0_0_5px_rgba(0,0,0,0.2)] bg-white flex items-center justify-center relative">
                    <img 
-                     src={`https://image.pollinations.ai/prompt/${encodeURIComponent('perfect realistic single colorful ' + (card.food as string) + ' on solid white background')}?width=100&height=100&nologo=true`} 
+                     src={`https://image.pollinations.ai/prompt/${encodeURIComponent('perfect single colorful ' + (card.food as string).replace(/\s+/g, '') + ' minimal flat vector illustration on pure white background')}?width=100&height=100&nologo=true&model=turbo`} 
                      alt={card.food as string}
-                     className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-90"
+                     loading="lazy"
+                     onError={(e) => {
+                       // Fallback to a simpler prompt if the first one fails
+                       const target = e.target as HTMLImageElement;
+                       if (!target.src.includes('fallback')) {
+                         target.src = `https://image.pollinations.ai/prompt/${encodeURIComponent((card.food as string).split(' ')[0] + ' food minimal flat color')}?width=100&height=100&nologo=true&model=turbo&fallback=true`;
+                       } else {
+                         // Ultimate fallback: just hide the broken image icon
+                         target.style.display = 'none';
+                         target.parentElement!.innerHTML = `<span class="text-xl font-bold text-gray-300">${(card.food as string).charAt(0)}</span>`;
+                       }
+                     }}
+                     className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-90 relative z-10"
                      referrerPolicy="no-referrer"
                    />
                  </div>
