@@ -36,12 +36,12 @@ export default function StoryGenerator() {
       - The story MUST be exactly 4 pages long.
       - Keep text brief: 1 to 2 very simple sentences per page.
       - For each page, pick 1 to 2 'actors' from exactly this list who are interacting in this scene: [${CHARACTERS.map(c => `"${c}"`).join(', ')}].
-      - Provide a 'sceneryPrompt' describing a rich, vibrant, detailed engaging background scene matching the story text and objects (NO people, NO characters). Specify 'highly detailed children book illustration, rich vibrant colors, NO people, empty scenery'.
+      - Provide a 'sceneryPrompt' describing ONLY the exact setting/location mentioned in the text (e.g., 'a wooden basketball court', 'a quiet library', 'a sunny kitchen'). It MUST match the text. Specify 'simple minimalist flat vector art background, smooth colors, no people, empty scenery'.
 
       Respond strictly with a raw JSON object in this format (NO markdown blocks, just the JSON):
       {
         "pages": [
-          { "text": "page text here", "sceneryPrompt": "rich vibrant engaging scenery description here", "actors": ["Elmo", "Cookie Monster"] }
+          { "text": "page text here", "sceneryPrompt": "simple minimalist flat vector art background of a...", "actors": ["Elmo", "Cookie Monster"] }
         ]
       }`;
 
@@ -152,7 +152,7 @@ export default function StoryGenerator() {
                   >
                     {/* Background Scenery without characters */}
                     <img
-                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent((pages[currentPage].sceneryPrompt || 'beautiful scene') + ', highly detailed children book illustration, rich vibrant colors, no people')}?width=800&height=800&nologo=true&seed=${topic.length + currentPage}`}
+                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent((pages[currentPage].sceneryPrompt || 'flat color background') + ', minimalist flat vector art, smooth colors, no people')}?width=800&height=800&nologo=true&model=turbo&seed=${topic.length + currentPage}`}
                       alt="Story background"
                       className="absolute inset-0 w-full h-full object-cover opacity-90"
                       referrerPolicy="no-referrer"
@@ -226,7 +226,7 @@ export default function StoryGenerator() {
                 <div key={idx} className="relative border-4 border-black bg-[#fdfbf7] overflow-hidden flex flex-col shadow-[inset_0_0_15px_rgba(0,0,0,0.3)]">
                   {/* Immutable static background */}
                   <img
-                    src={`https://image.pollinations.ai/prompt/${encodeURIComponent((p.sceneryPrompt || 'beautiful scene') + ', highly detailed children book illustration, rich vibrant colors, no people')}?width=800&height=800&nologo=true&seed=${topic.length + idx}`}
+                    src={`https://image.pollinations.ai/prompt/${encodeURIComponent((p.sceneryPrompt || 'flat color background') + ', minimalist flat vector art, smooth colors, no people')}?width=800&height=800&nologo=true&model=turbo&seed=${topic.length + idx}`}
                     alt="Story background panel"
                     className="absolute inset-0 w-full h-full object-cover opacity-90"
                     referrerPolicy="no-referrer"
@@ -237,10 +237,11 @@ export default function StoryGenerator() {
                     {(p.actors || []).slice(0, 2).map((actor, actIdx) => (
                       <div key={actIdx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_5px_15px_rgba(0,0,0,0.5)]">
                         {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (
-                          <TransparentCharacter 
+                          <img 
                             src={OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES]} 
                             alt={actor} 
-                            className="relative z-10 max-h-full max-w-[150%] object-contain origin-bottom" 
+                            className="relative z-10 max-h-full max-w-[150%] object-contain origin-bottom mix-blend-multiply brightness-[1.05] contrast-[1.1]" 
+                            style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
                           />
                         )}
                       </div>
