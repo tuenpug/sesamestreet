@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Sparkles, Loader2, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
+import { BookOpen, Sparkles, Loader2, ChevronRight, ChevronLeft, Printer, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI } from '@google/genai';
 import { CHARACTERS, OFFICIAL_IMAGES } from '../constants';
@@ -11,12 +11,67 @@ interface Page {
   actors: string[];
 }
 
+const StoryBackgroundImage = ({ 
+  page, 
+  topic, 
+  pageIndex, 
+  bgSeeds, 
+  setBgSeeds 
+}: {
+  page: Page,
+  topic: string,
+  pageIndex: number,
+  bgSeeds: Record<number, number>,
+  setBgSeeds: React.Dispatch<React.SetStateAction<Record<number, number>>>
+}) => {
+  const [fallbackLevel, setFallbackLevel] = useState(0);
+
+  const seed = topic.length + pageIndex + (bgSeeds[pageIndex] || 0);
+  
+  // Truncate prompt to prevent URL too long errors which frequently cause load failures
+  const safePrompt = (page.sceneryPrompt || 'colorful minimal background').slice(0, 150);
+  
+  let src = '';
+  if (fallbackLevel === 0) {
+    src = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt + ', simple minimalist vector illustration, flat solid colors, no people')}?width=600&height=600&nologo=true&model=turbo&seed=${seed}`;
+  } else {
+    src = `https://image.pollinations.ai/prompt/${encodeURIComponent('kids TV show stage background, simple flat color, minimal')}?width=600&height=600&nologo=true&model=turbo&fallback=true&seed=${seed}`;
+  }
+
+  return (
+    <div 
+      className="absolute inset-0 z-0 group cursor-pointer bg-gradient-to-br from-blue-100 via-yellow-50 to-green-100"
+      onClick={(e) => {
+        e.stopPropagation();
+        setBgSeeds(prev => ({ ...prev, [pageIndex]: (prev[pageIndex] || 0) + 1 }));
+        setFallbackLevel(0);
+      }}
+      title="Click to refresh background image!"
+    >
+      {fallbackLevel < 2 && (
+         <img
+          key={`${seed}-${fallbackLevel}`}
+          src={src}
+          alt="Story background panel"
+          className="w-full h-full object-cover opacity-90 transition-opacity duration-300"
+          referrerPolicy="no-referrer"
+          onError={() => setFallbackLevel(prev => prev + 1)}
+        />
+      )}
+      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex print:hidden items-center justify-center pointer-events-none transition-all z-20">
+        <RefreshCw size={48} className="text-white drop-shadow-md" />
+      </div>
+    </div>
+  );
+};
+
 export default function StoryGenerator() {
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [pages, setPages] = useState<Page[] | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [bgSeeds, setBgSeeds] = useState<Record<number, number>>({});
 
   const handleGenerate = async () => {
     if (!topic.trim()) return;
@@ -36,12 +91,12 @@ export default function StoryGenerator() {
       - The story MUST be exactly 4 pages long.
       - Keep text brief: 1 to 2 very simple sentences per page.
       - For each page, pick 1 to 2 'actors' from exactly this list who are interacting in this scene: [${CHARACTERS.map(c => `"${c}"`).join(', ')}].
-      - Provide a 'sceneryPrompt' describing ONLY the exact setting/location mentioned in the text (e.g., 'a wooden basketball court', 'a quiet library', 'a sunny kitchen'). It MUST match the text. Specify 'simple minimalist flat vector art background, smooth colors, no people, empty scenery'.
+      - Provide a 'sceneryPrompt' describing ONLY the exact setting/location mentioned in the text (e.g., 'a wooden basketball court', 'a quiet library', 'a sunny kitchen'). It MUST match the text. Specify 'simple minimalist vector illustration background, flat solid colors, no people, empty scenery'.
 
       Respond strictly with a raw JSON object in this format (NO markdown blocks, just the JSON):
       {
         "pages": [
-          { "text": "page text here", "sceneryPrompt": "simple minimalist flat vector art background of a...", "actors": ["Elmo", "Cookie Monster"] }
+          { "text": "page text here", "sceneryPrompt": "simple minimalist vector illustration background of a...", "actors": ["Elmo", "Cookie Monster"] }
         ]
       }`;
 
@@ -151,15 +206,16 @@ export default function StoryGenerator() {
                     className="absolute inset-0 w-full h-full"
                   >
                     {/* Background Scenery without characters */}
-                    <img
-                      src={`https://image.pollinations.ai/prompt/${encodeURIComponent((pages[currentPage].sceneryPrompt || 'flat color background') + ', minimalist flat vector art, smooth colors, no people')}?width=800&height=800&nologo=true&model=turbo&seed=${topic.length + currentPage}`}
-                      alt="Story background"
-                      className="absolute inset-0 w-full h-full object-cover opacity-90"
-                      referrerPolicy="no-referrer"
+                    <StoryBackgroundImage 
+                       page={pages[currentPage]} 
+                       topic={topic} 
+                       pageIndex={currentPage} 
+                       bgSeeds={bgSeeds} 
+                       setBgSeeds={setBgSeeds} 
                     />
 
                     {/* Magic Pop-Up Puppet Theater Overlay */}
-                    <div className="absolute inset-x-0 bottom-[18%] top-[8%] flex items-end justify-center gap-4 sm:gap-12 pointer-events-none z-10 px-8">
+                    <div className="absolute inset-x-0 bottom-[28%] top-[5%] flex items-end justify-center gap-4 sm:gap-12 pointer-events-none z-10 px-8">
                       {(pages[currentPage].actors || []).slice(0, 2).map((actor, idx) => (
                         <div key={idx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_5px_15px_rgba(0,0,0,0.5)]">
                           {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (
@@ -174,11 +230,11 @@ export default function StoryGenerator() {
                     </div>
                     
                     {/* Darker Vignette Shadow for Text Readability at Bottom */}
-                    <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-orange-950/80 via-black/40 to-transparent pointer-events-none z-20"></div>
+                    <div className="absolute inset-x-0 bottom-0 h-[35%] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-20"></div>
 
                     {/* Integrated Text */}
-                    <div className="absolute inset-x-0 bottom-6 md:bottom-10 px-6 md:px-16 z-30 flex flex-col items-center justify-end text-center pointer-events-none">
-                      <p className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#fdfbf7] leading-tight drop-shadow-[0_4px_6px_rgba(0,0,0,1)] tracking-wide">
+                    <div className="absolute inset-x-0 bottom-4 md:bottom-8 px-6 md:px-16 z-30 flex flex-col items-center justify-end text-center pointer-events-none">
+                      <p className="text-xl md:text-3xl lg:text-4xl font-extrabold text-[#fdfbf7] leading-tight md:leading-snug drop-shadow-[0_4px_6px_rgba(0,0,0,1)] tracking-wide pt-4">
                         {pages[currentPage].text}
                       </p>
                     </div>
@@ -225,15 +281,16 @@ export default function StoryGenerator() {
               {pages.map((p, idx) => (
                 <div key={idx} className="relative border-4 border-black bg-[#fdfbf7] overflow-hidden flex flex-col shadow-[inset_0_0_15px_rgba(0,0,0,0.3)]">
                   {/* Immutable static background */}
-                  <img
-                    src={`https://image.pollinations.ai/prompt/${encodeURIComponent((p.sceneryPrompt || 'flat color background') + ', minimalist flat vector art, smooth colors, no people')}?width=800&height=800&nologo=true&model=turbo&seed=${topic.length + idx}`}
-                    alt="Story background panel"
-                    className="absolute inset-0 w-full h-full object-cover opacity-90"
-                    referrerPolicy="no-referrer"
+                  <StoryBackgroundImage 
+                     page={p} 
+                     topic={topic} 
+                     pageIndex={idx} 
+                     bgSeeds={bgSeeds} 
+                     setBgSeeds={setBgSeeds} 
                   />
                   
                   {/* Magic Pop-Up Puppet Theater Overlay */}
-                  <div className="absolute inset-x-0 bottom-[18%] top-[8%] flex items-end justify-center gap-2 sm:gap-6 pointer-events-none z-10 px-4">
+                  <div className="absolute inset-x-0 bottom-[26%] top-[5%] flex items-end justify-center gap-2 sm:gap-6 pointer-events-none z-10 px-4">
                     {(p.actors || []).slice(0, 2).map((actor, actIdx) => (
                       <div key={actIdx} className="relative w-1/2 flex items-end justify-center h-full drop-shadow-[0px_5px_15px_rgba(0,0,0,0.5)]">
                         {actor && OFFICIAL_IMAGES[actor as keyof typeof OFFICIAL_IMAGES] && (

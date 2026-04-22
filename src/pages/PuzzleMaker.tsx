@@ -185,7 +185,16 @@ export default function PuzzleMaker() {
              style={{ width: '100%', maxWidth: '800px', aspectRatio: `${cols}/${rows}` }}>
           
           {/* Layer 1: Background Scene */}
-          <img key={`${bgImageUrl}`} src={bgImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <div 
+            className="absolute inset-0 z-0 group cursor-pointer" 
+            onClick={() => setSeed(s => s + 1)}
+            title="Click to refresh background image!"
+          >
+            <img key={`${bgImageUrl}`} src={bgImageUrl} alt="Background" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center pointer-events-none transition-all">
+              <RefreshCw size={48} className="text-white drop-shadow-md" />
+            </div>
+          </div>
           
           {/* Layer 2: Official Character Graphic (Composite) */}
           <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
