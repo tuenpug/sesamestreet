@@ -1,43 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CARD_DECK, OFFICIAL_IMAGES } from '../constants';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import TransparentCharacter from '../components/TransparentCharacter';
 
-const FoodImage = ({ card }: { card: any }) => {
-  const [seed, setSeed] = useState(0);
-  const [fallbackLevel, setFallbackLevel] = useState(0);
+const WIKI_MAPPING: Record<string, string> = {
+  "Trail Mix": "Trail mix",
+  "Fig": "Common_fig",
+  "Spinach": "Spinach",
+  "Broccoli": "Broccoli",
+  "Kiwi": "Kiwifruit",
+  "Ugli Fruit": "Jamaican_tangelo",
+  "Dragon Fruit": "Pitaya",
+  "Yam": "Yam_(vegetable)",
+  "Honeydew": "Honeydew_(melon)",
+  "Carrot": "Carrot",
+  "Raspberry": "Raspberry",
+  "Apple": "Apple",
+  "Vine Tomato": "Tomato",
+  "Iceberg Lettuce": "Iceberg_lettuce",
+  "Nectarine": "Nectarine",
+  "Watermelon": "Watermelon",
+  "Eggplant": "Eggplant",
+  "Jalapeno": "Jalapeño",
+  "Orange": "Orange_(fruit)",
+  "Tomato": "Tomato",
+  "Zucchini": "Zucchini",
+  "Lemon": "Lemon",
+  "Grape": "Grape",
+  "Quince": "Quince",
+  "Mango": "Mango",
+  "Peach": "Peach"
+};
 
-  const src = fallbackLevel === 0
-    ? `https://image.pollinations.ai/prompt/${encodeURIComponent('perfect single colorful ' + (card.food as string).replace(/\s+/g, '') + ' minimal flat vector illustration on pure white background')}?width=100&height=100&nologo=true&model=turbo&seed=${seed}`
-    : `https://image.pollinations.ai/prompt/${encodeURIComponent((card.food as string).split(' ')[0] + ' food minimal flat color')}?width=100&height=100&nologo=true&model=turbo&fallback=true&seed=${seed}`;
+const FoodImage = ({ card, index }: { card: any, index: number }) => {
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    // Stagger API calls slightly to be gentle on browser networking
+    const timer = setTimeout(async () => {
+      try {
+        const title = WIKI_MAPPING[card.food as string] || card.food;
+        const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300`);
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (pages) {
+          const pageId = Object.keys(pages)[0];
+          if (pageId !== "-1" && pages[pageId].thumbnail && isMounted) {
+            setImgSrc(pages[pageId].thumbnail.source);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }, index * 40); // slight stagger
+
+    return () => { 
+       isMounted = false; 
+       clearTimeout(timer);
+    };
+  }, [card.food, index]);
 
   return (
-    <div 
-      className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-sm overflow-hidden border border-gray-300 shadow-[inset_0_0_5px_rgba(0,0,0,0.2)] bg-white flex items-center justify-center relative cursor-pointer group"
-      onClick={(e) => {
-         e.stopPropagation();
-         setSeed(s => s + 1);
-         setFallbackLevel(0);
-      }}
-      title="Click to refresh image!"
-    >
-      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center z-30 transition-all">
-        <RefreshCw size={18} className="text-white drop-shadow-md" />
-      </div>
-
-      {fallbackLevel < 2 ? (
-        <img 
-          key={`${seed}-${fallbackLevel}`}
-          src={src}
-          alt={card.food as string}
-          loading="lazy"
-          onError={() => setFallbackLevel(prev => prev + 1)}
-          className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-90 relative z-10"
-          referrerPolicy="no-referrer"
-        />
+    <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-[4px] overflow-hidden border border-gray-300 shadow-[inset_0_0_5px_rgba(0,0,0,0.2)] bg-[#f8f9fa] flex items-center justify-center relative p-[2px]">
+      {loading ? (
+         <RefreshCw size={14} className="text-gray-300 animate-spin" />
+      ) : imgSrc ? (
+         <img src={imgSrc} alt={card.food} className="w-full h-full object-cover rounded-sm mix-blend-multiply" referrerPolicy="no-referrer" />
       ) : (
-        <span className="text-xl font-bold text-gray-300 relative z-10">{(card.food as string).charAt(0)}</span>
+         <span className="text-xl font-bold text-gray-300">{card.food.charAt(0)}</span>
       )}
     </div>
   );
@@ -146,7 +182,7 @@ export default function CardDeck() {
               <div className="shrink-0 bg-white/80 border-2 border-white rounded-lg flex flex-row items-center p-1 mt-2 relative z-10 shadow-sm gap-2">
                  
                  {/* Generated Food Image */}
-                 <FoodImage card={card} />
+                 <FoodImage card={card} index={index} />
 
                  {/* Food Name highlighting Lowercase */}
                  <div className="flex-1 flex flex-col justify-center overflow-hidden pl-1">
@@ -173,7 +209,7 @@ export default function CardDeck() {
                      })()}
                    </h3>
                    <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-black/60 font-extrabold leading-none mt-0.5">
-                     Nutritious Element
+                     {card.category as string}
                    </p>
                  </div>
               </div>
